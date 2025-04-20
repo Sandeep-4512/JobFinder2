@@ -1,34 +1,46 @@
-// server.js
 const express = require('express');
-const app = express();
 const mongoose = require('mongoose');
 const cors = require('cors');
-require('dotenv').config();
+const dotenv = require('dotenv');
+const path = require('path');
+
+dotenv.config();
+
+const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// Connect to MongoDB
+// MongoDB connection
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-}).then(() => console.log('MongoDB connected'))
-  .catch((err) => console.log('MongoDB error:', err));
+})
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch(err => console.error("❌ MongoDB connection error:", err));
 
-// Import and use routes
-const userRoutes = require('./routes/userRoutes');
-const applicationRoutes = require('./routes/applicationRoutes');
-app.use('/api/users', userRoutes);
-app.use('/api/applications', applicationRoutes);
-
-// Other routes...
+// Routes
 const authRoutes = require('./routes/authRoutes');
-const notificationRoutes = require('./routes/notificationRoutes');
+const applicationRoutes = require('./routes/applicationRoutes');
 const jobRoutes = require('./routes/jobRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+
 app.use('/api/auth', authRoutes);
+app.use('/api/applications', applicationRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/notifications', notificationRoutes);
 
+// Serve uploaded resumes if needed (optional, in case of resume downloads)
+app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
+
+// Default route
+app.get('/', (req, res) => {
+  res.send('API is running...');
+});
+
+// Server listen
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
