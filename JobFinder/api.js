@@ -1,7 +1,8 @@
+// api.js
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://192.168.60.225:5000/api',
+  baseURL: 'https://jobfinder-r8g0.onrender.com/api', // 🔥 Your live backend
 });
 
 export const setAuthToken = (token) => {

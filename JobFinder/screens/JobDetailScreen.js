@@ -6,8 +6,8 @@ import {
   ScrollView,
   ActivityIndicator,
   TouchableOpacity,
-  Button,
   Alert,
+  TextInput,
 } from 'react-native';
 import { useRoute, useNavigation, useIsFocused } from '@react-navigation/native';
 import API from '../api';
@@ -24,6 +24,7 @@ export default function JobDetailScreen() {
   const [selectedFilter, setSelectedFilter] = useState('pending');
   const [isAlreadyApplied, setIsAlreadyApplied] = useState(false);
   const [applicationStatus, setApplicationStatus] = useState(null);
+  const [portfolioLink, setPortfolioLink] = useState('');
 
   useEffect(() => {
     if (isFocused) fetchJobAndApplications();
@@ -48,45 +49,68 @@ export default function JobDetailScreen() {
         setApplications(appRes.data);
       }
     } catch (error) {
-      console.error('❌ Error fetching job detail:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
+      console.error('❌ Error fetching job detail:', error);
       setJob(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleApply = async () => {
+  const isOwnJob = user?.role === 'recruiter' && job?.postedBy?._id === user._id;
+
+  const handlePortfolioCheck = async () => {
+    if (!portfolioLink) {
+      Alert.alert(
+        'No Portfolio Added',
+        'You haven’t added a portfolio link. Do you want to apply anyway?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Apply Anyway', onPress: () => applyNow() },
+        ]
+      );
+    } else {
+      applyNow();
+    }
+  };
+
+  const handleApply = () => {
+    const isProfileIncomplete =
+      !user?.name ||
+      !user?.email ||
+      !user?.resume ||
+      !user?.education ||
+      user?.education.trim().length === 0 ||
+      !user?.skills ||
+      !Array.isArray(user.skills) ||
+      user.skills.length === 0;
+
+    if (isProfileIncomplete) {
+      Alert.alert(
+        '⚠ Incomplete Profile',
+        'Your profile is missing required details (name, email, resume, education, or skills). Do you want to proceed anyway?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Proceed Anyway', onPress: handlePortfolioCheck },
+        ]
+      );
+    } else {
+      handlePortfolioCheck();
+    }
+  };
+
+  const applyNow = async () => {
     try {
-      console.log('📤 Applying to job:', { jobId });
-      const payload = { jobId };
-      const response = await API.post(`/applications/apply`, payload);
-      console.log('✅ Application response:', response.data);
+      const payload = { jobId, portfolioLink };
+      await API.post(`/applications/apply`, payload);
       Alert.alert('✅ Application Submitted!');
       navigation.goBack();
     } catch (err) {
-      console.error('❌ Apply error details:', {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-        headers: err.response?.headers,
-        request: {
-          url: err.request?.responseURL,
-          method: err.request?.method,
-          data: err.request?._data,
-        },
-      });
       Alert.alert(
         'Error',
         err.response?.data?.message || 'Could not apply to this job. Please try again.'
       );
     }
   };
-
-  const isOwnJob = user?.role === 'recruiter' && job?.postedBy?._id === user._id;
 
   const filteredApps =
     selectedFilter === 'all'
@@ -125,6 +149,28 @@ export default function JobDetailScreen() {
 
         <Text style={styles.label}>Posted By:</Text>
         <Text style={styles.text}>{job.postedBy?.name || 'N/A'}</Text>
+
+        <Text style={styles.label}>Skills:</Text>
+        {job.skills?.length > 0 ? (
+          job.skills.map((skill, index) => (
+            <Text key={index} style={styles.skillText}>
+              {skill}
+            </Text>
+          ))
+        ) : (
+          <Text style={styles.text}>No skills required</Text>
+        )}
+
+        <Text style={styles.label}>Requirements:</Text>
+        {job.requirements?.length > 0 ? (
+          job.requirements.map((req, index) => (
+            <Text key={index} style={styles.text}>
+              {req}
+            </Text>
+          ))
+        ) : (
+          <Text style={styles.text}>No specific requirements listed</Text>
+        )}
       </View>
 
       {user?.role === 'job-seeker' && (
@@ -146,9 +192,17 @@ export default function JobDetailScreen() {
               </Text>
             </View>
           ) : (
-            <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
-              <Text style={styles.applyButtonText}>Apply Now</Text>
-            </TouchableOpacity>
+            <>
+              <TextInput
+                style={styles.portfolioInput}
+                placeholder="Enter Portfolio URL (optional)"
+                value={portfolioLink}
+                onChangeText={setPortfolioLink}
+              />
+              <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
+                <Text style={styles.applyButtonText}>Apply Now</Text>
+              </TouchableOpacity>
+            </>
           )}
         </View>
       )}
@@ -183,8 +237,7 @@ export default function JobDetailScreen() {
                       {
                         (status === 'all'
                           ? applications
-                          : applications.filter((a) => a.status === status)
-                        ).length
+                          : applications.filter((a) => a.status === status)).length
                       })
                     </Text>
                   </TouchableOpacity>
@@ -198,14 +251,21 @@ export default function JobDetailScreen() {
                   <View key={app._id} style={styles.applicantCard}>
                     <Text style={styles.applicantName}>{app.applicant.name}</Text>
                     <Text>{app.applicant.email}</Text>
-                    <Button
-                      title="View Application"
+                    {app.portfolioLink ? (
+                      <Text style={styles.portfolioLink}>
+                        <Text style={{ fontWeight: 'bold' }}>Portfolio:</Text> {app.portfolioLink}
+                      </Text>
+                    ) : (
+                      <Text>No portfolio link available</Text>
+                    )}
+                    <TouchableOpacity
+                      style={styles.viewButton}
                       onPress={() =>
-                        navigation.navigate('ApplicantDetail', {
-                          application: app,
-                        })
+                        navigation.navigate('ApplicantDetail', { application: app })
                       }
-                    />
+                    >
+                      <Text style={styles.viewButtonText}>View Application</Text>
+                    </TouchableOpacity>
                   </View>
                 ))
               )}
@@ -259,6 +319,11 @@ const styles = StyleSheet.create({
     color: '#334155',
     marginBottom: 12,
   },
+  skillText: {
+    color: '#334155',
+    fontSize: 14,
+    marginBottom: 4,
+  },
   jobSeekerSection: {
     alignItems: 'center',
     marginTop: 10,
@@ -275,6 +340,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 16,
   },
+  portfolioInput: {
+    borderColor: '#d1d5db',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: 10,
+    width: '100%',
+  },
   appliedBox: {
     backgroundColor: '#dbeafe',
     borderRadius: 10,
@@ -283,12 +357,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statusLabel: {
-    fontSize: 16,
-    marginTop: 4,
+    fontWeight: 'bold',
   },
   statusValue: {
-    fontSize: 18,
-    fontWeight: '700',
     marginTop: 6,
   },
   approved: {
@@ -298,64 +369,76 @@ const styles = StyleSheet.create({
     color: 'red',
   },
   pending: {
-    color: '#f59e0b',
+    color: '#ffba08',
+  },
+  recruiterSection: {
+    marginTop: 20,
   },
   filterBar: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-around',
-    marginBottom: 15,
+    gap: 10,
+    justifyContent: 'center',
+    marginVertical: 16,
   },
   filterButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    backgroundColor: '#e0e7ff',
-    marginBottom: 8,
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: '#e2e8f0',
+    marginHorizontal: 4,
   },
   activeFilterButton: {
     backgroundColor: '#4f46e5',
   },
   filterText: {
     fontSize: 14,
-    color: '#1e40af',
   },
   activeFilterText: {
     color: '#fff',
-    fontWeight: '600',
   },
   applicantCard: {
     backgroundColor: '#fff',
-    padding: 14,
+    padding: 16,
+    marginBottom: 12,
     borderRadius: 8,
-    marginBottom: 10,
     elevation: 2,
   },
   applicantName: {
-    fontSize: 16,
     fontWeight: '600',
-    marginBottom: 4,
+    fontSize: 16,
+  },
+  portfolioLink: {
+    marginTop: 10,
+    fontSize: 14,
+    color: '#4f46e5',
+  },
+  restrictedBox: {
+    backgroundColor: '#fef2f2',
+    padding: 12,
+    borderRadius: 10,
+    marginTop: 20,
+  },
+  restrictedText: {
+    color: '#9b2c2c',
   },
   noApplicants: {
     textAlign: 'center',
-    fontStyle: 'italic',
-    color: '#6b7280',
+    color: '#475569',
+  },
+  viewButton: {
     marginTop: 10,
+    backgroundColor: '#4f46e5',
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  viewButtonText: {
+    color: '#fff',
+    fontWeight: '600',
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  restrictedBox: {
-    backgroundColor: '#fee2e2',
-    padding: 16,
-    borderRadius: 10,
-    marginTop: 10,
-  },
-  restrictedText: {
-    color: '#991b1b',
-    textAlign: 'center',
-    fontWeight: '600',
   },
 });

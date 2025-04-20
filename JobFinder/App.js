@@ -10,6 +10,8 @@ import ViewProfileScreen from './screens/ViewProfileScreen';
 import EditProfileScreen from './screens/EditProfileScreen';
 import ApplicantDetailScreen from './screens/ApplicantDetailScreen';
 import NotificationScreen from './screens/NotificationScreen';
+import JobSearchScreen from './screens/JobSearchScreen';
+
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -26,6 +28,8 @@ export default function App() {
         <Stack.Screen name="EditProfile" component={EditProfileScreen} />
         <Stack.Screen name="Notifications" component={NotificationScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="JobSearch" component={JobSearchScreen} />
+
       </Stack.Navigator>
     </NavigationContainer>
   );

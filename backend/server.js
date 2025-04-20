@@ -1,3 +1,4 @@
+// server.js
 const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
@@ -16,7 +17,9 @@ mongoose.connect(process.env.MONGO_URI, {
   .catch((err) => console.log('MongoDB error:', err));
 
 // Import and use routes
+const userRoutes = require('./routes/userRoutes');
 const applicationRoutes = require('./routes/applicationRoutes');
+app.use('/api/users', userRoutes);
 app.use('/api/applications', applicationRoutes);
 
 // Other routes...

@@ -129,6 +129,13 @@ export default function HomeScreen({ route, navigation }) {
 
         <View style={styles.iconRow}>
           <TouchableOpacity
+            onPress={() => navigation.navigate('JobSearch')}
+            style={styles.iconWrapper}
+          >
+            <Icon name="search" size={26} color="#1e3a8a" style={styles.icon} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
             onPress={() => navigation.navigate('Notifications', { user })}
             style={styles.notificationWrapper}
           >
@@ -231,6 +238,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  iconWrapper: {
+    marginRight: 10,
   },
   notificationWrapper: {
     position: 'relative',
