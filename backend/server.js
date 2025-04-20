@@ -34,7 +34,7 @@ app.use('/api/notifications', notificationRoutes);
 // Serve uploaded resumes if needed (optional, in case of resume downloads)
 app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
 
-// Default route
+// Default route for health check or debugging
 app.get('/', (req, res) => {
   res.send('API is running...');
 });

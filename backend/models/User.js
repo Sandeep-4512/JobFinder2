@@ -1,4 +1,3 @@
-// models/User.js
 const mongoose = require("mongoose");
 
 // Subschema for education details
@@ -21,9 +20,6 @@ const UserSchema = new mongoose.Schema({
   experience: String,
   education: [EducationSchema], // Updated structured array
   skills: [String],
-
-  // Portfolio link for job seekers
-  portfolioLink: { type: String }, // Add a field to store the job seeker's portfolio link
 });
 
 module.exports = mongoose.model("User", UserSchema);
