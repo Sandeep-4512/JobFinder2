@@ -26,6 +26,7 @@
     "expo": "~52.0.42",
     "expo-blur": "~14.0.3",
     "expo-constants": "~17.0.8",
+    "expo-document-picker": "~13.0.3",
     "expo-font": "~13.0.4",
     "expo-haptics": "~14.0.1",
     "expo-linking": "~7.0.5",
@@ -53,8 +54,7 @@
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
-    "wonka": "^6.3.5",
-    "expo-document-picker": "~13.0.3"
+    "wonka": "^6.3.5"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
